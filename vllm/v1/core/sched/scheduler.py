@@ -964,8 +964,9 @@ class Scheduler(SchedulerInterface):
             )
             if scheduled_spec_token_ids:
                 if model_runner_output.num_draft_tokens_per_seq:
-                    num_draft_tokens = (
-                        model_runner_output.num_draft_tokens_per_seq[req_index])
+                    num_draft_tokens = model_runner_output.num_draft_tokens_per_seq[
+                        req_index
+                    ]
                 else:
                     num_draft_tokens = len(scheduled_spec_token_ids)
 
@@ -1276,14 +1277,16 @@ class Scheduler(SchedulerInterface):
         if not self.log_stats:
             return None
         # Considering dynamic_spec_decode
-        capacity_needed = max(int(num_draft_tokens), int(num_accepted_tokens),
-                              int(self.num_spec_tokens))
+        capacity_needed = max(
+            int(num_draft_tokens), int(num_accepted_tokens), int(self.num_spec_tokens)
+        )
 
         # If the stats object does not exist or is too small, create a new
         # one and copy over the old data.
-        if (spec_decoding_stats is None
-                or capacity_needed > spec_decoding_stats.num_spec_tokens):
-
+        if (
+            spec_decoding_stats is None
+            or capacity_needed > spec_decoding_stats.num_spec_tokens
+        ):
             new_stats = SpecDecodingStats.new(capacity_needed)
 
             # If there was an old object, preserve its historical data.
@@ -1295,11 +1298,12 @@ class Scheduler(SchedulerInterface):
 
                 # Use slicing for a more compact array copy.
                 len_to_copy = len(old_stats.num_accepted_tokens_per_pos)
-                new_stats.num_accepted_tokens_per_pos[:len_to_copy] = \
+                new_stats.num_accepted_tokens_per_pos[:len_to_copy] = (
                     old_stats.num_accepted_tokens_per_pos[:len_to_copy]
+                )
 
             spec_decoding_stats = new_stats
-            
+
         spec_decoding_stats.observe_draft(
             num_draft_tokens=num_draft_tokens, num_accepted_tokens=num_accepted_tokens
         )

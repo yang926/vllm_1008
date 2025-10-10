@@ -132,6 +132,7 @@ class ModelRunnerOutput:
 
     num_draft_tokens_per_seq: Optional[list[int]] = None
 
+
 # ModelRunnerOutput wrapper for async scheduling.
 class AsyncModelRunnerOutput(ABC):
     @abstractmethod
