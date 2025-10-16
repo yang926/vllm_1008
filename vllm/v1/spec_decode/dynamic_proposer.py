@@ -3,7 +3,6 @@
 
 from collections import deque
 from collections.abc import Sequence
-from typing import Optional
 
 import numpy as np
 import torch
@@ -64,7 +63,7 @@ class DynamicProposer(EagleProposer):
 
     def update_sequence_states(
         self,
-        req_ids: Sequence[Optional[str]],
+        req_ids: Sequence[str | None],
         num_accepted_tokens: Sequence[int],
     ) -> None:
         """
@@ -89,7 +88,7 @@ class DynamicProposer(EagleProposer):
 
     def cleanup_finished_seqs(
         self,
-        req_ids_in_batch: Sequence[Optional[str]],
+        req_ids_in_batch: Sequence[str | None],
     ) -> None:
         """Cleans up the state for sequences that are no longer in the batch."""
         active_req_ids = {req_id for req_id in req_ids_in_batch if req_id}
@@ -108,7 +107,7 @@ class DynamicProposer(EagleProposer):
 
     def _adjust_and_get_spec_tokens_for_batch(
         self,
-        req_ids: Sequence[Optional[str]],
+        req_ids: Sequence[str | None],
     ) -> list[int]:
         """
         Calculates the number of speculative tokens for each sequence based on
@@ -160,7 +159,7 @@ class DynamicProposer(EagleProposer):
         last_token_indices: torch.Tensor,
         common_attn_metadata: CommonAttentionMetadata,
         sampling_metadata: SamplingMetadata,
-        mm_embed_inputs: Optional[tuple[list[torch.Tensor], torch.Tensor]] = None,
+        mm_embed_inputs: tuple[list[torch.Tensor], torch.Tensor] | None = None,
     ) -> torch.Tensor:
         if self.runner is None:
             raise RuntimeError("DynamicProposer requires GPUModelRunner")

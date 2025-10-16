@@ -125,7 +125,7 @@ class SpeculativeConfig:
     """Target acceptance rate for dynamically adjusting the number of speculative
     tokens (k). Used when the speculative decoding method is "eagle_dynamic"."""
 
-    speculative_token_tree: Optional[str] = None
+    speculative_token_tree: str | None = None
     """Specifies the tree structure for speculative token generation.
     """
     # required configuration params passed from engine
