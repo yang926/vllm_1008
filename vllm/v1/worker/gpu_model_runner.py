@@ -2660,7 +2660,10 @@ class GPUModelRunner(
             sampling_metadata,
         )
         output_token_ids = sampler_output.sampled_token_ids
-        if self.speculative_config is not None and self.speculative_config.method == "eagle_dynamic":
+        if (
+            self.speculative_config is not None
+            and self.speculative_config.method == "eagle_dynamic"
+        ):
             self._record_eagle_acceptance(output_token_ids, spec_decode_metadata)
         self._update_states_after_model_execute(output_token_ids)
         return sampler_output
