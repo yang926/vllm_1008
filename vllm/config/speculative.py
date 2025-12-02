@@ -38,7 +38,7 @@ MTPModelTypes = Literal[
     "mtp",
     "pangu_ultra_moe_mtp",
 ]
-EagleModelTypes = Literal["eagle", "eagle3", MTPModelTypes]
+EagleModelTypes = Literal["eagle", "eagle3", "eagle_dynamic", MTPModelTypes]
 SpeculativeMethod = Literal[
     "ngram",
     "medusa",
