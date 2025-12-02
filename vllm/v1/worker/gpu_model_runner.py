@@ -1119,14 +1119,6 @@ class GPUModelRunner(
             num_accepted = self._calculate_prefix_match(emitted_tokens, draft_tokens)
             accepted_per_row[i] = num_accepted
 
-            # Collect debug information
-            if logger.isEnabledFor(logging.INFO):
-                req_id = (
-                    self.input_batch.req_ids[i]
-                    if i < len(self.input_batch.req_ids)
-                    else None
-                )
-
         # 3. Update batch state with the acceptance results.
         # This buffer is used by dynamic proposers to adjust k.
         self.input_batch.num_accepted_tokens_cpu[:batch_size].fill(0)
