@@ -4,6 +4,7 @@
 import gc
 import itertools
 import time
+import logging
 from collections import defaultdict
 from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
@@ -1099,6 +1100,7 @@ class GPUModelRunner(
 
         accepted_per_row = [0] * num_rows_to_process
         draft_lengths = [0] * num_rows_to_process
+        log_chunks = []
 
         # 2. Main loop: Calculate acceptance for each request.
         for i in range(num_rows_to_process):
@@ -1117,6 +1119,22 @@ class GPUModelRunner(
             # Calculate the number of accepted tokens via prefix matching.
             num_accepted = self._calculate_prefix_match(emitted_tokens, draft_tokens)
             accepted_per_row[i] = num_accepted
+                if req_id is not None:
+                    bonus_token = emitted_tokens[-1] if emitted_tokens else None
+                    log_parts = [
+                        f"req={req_id}",
+                        f"accepted={num_accepted}/{len(draft_tokens)}",
+                        f"draft={draft_tokens}",
+                        f"emitted={emitted_tokens}",
+                    ]
+                    if bonus_token is not None:
+                        log_parts.append(f"bonus={bonus_token}")
+                    log_chunks.append(" ".join(log_parts))
+                else:
+                    log_chunks.append(
+                        f"idx={i} accepted={num_accepted}/{len(draft_tokens)} "
+                        f"draft={draft_tokens} emitted={emitted_tokens}"
+                    )
 
         # 3. Update batch state with the acceptance results.
         # This buffer is used by dynamic proposers to adjust k.
@@ -1131,6 +1149,10 @@ class GPUModelRunner(
             self._eagle_acc_sum = 0
         self._eagle_prop_sum += sum(draft_lengths)
         self._eagle_acc_sum += sum(accepted_per_row)
+
+        # 5. Finalize and publish logs.
+        if log_chunks:
+            logger.info("EAGLE acceptance step: %s", " | ".join(log_chunks))
 
     def _init_mrope_positions(self, req_state: CachedRequestState):
         model = self.get_model()
