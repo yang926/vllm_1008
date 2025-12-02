@@ -1127,23 +1127,6 @@ class GPUModelRunner(
                     else None
                 )
 
-                if req_id is not None:
-                    bonus_token = emitted_tokens[-1] if emitted_tokens else None
-                    log_parts = [
-                        f"req={req_id}",
-                        f"accepted={num_accepted}/{len(draft_tokens)}",
-                        f"draft={draft_tokens}",
-                        f"emitted={emitted_tokens}",
-                    ]
-                    if bonus_token is not None:
-                        log_parts.append(f"bonus={bonus_token}")
-                    log_chunks.append(" ".join(log_parts))
-                else:
-                    log_chunks.append(
-                        f"idx={i} accepted={num_accepted}/{len(draft_tokens)} "
-                        f"draft={draft_tokens} emitted={emitted_tokens}"
-                    )
-
         # 3. Update batch state with the acceptance results.
         # This buffer is used by dynamic proposers to adjust k.
         self.input_batch.num_accepted_tokens_cpu[:batch_size].fill(0)
@@ -1157,10 +1140,6 @@ class GPUModelRunner(
             self._eagle_acc_sum = 0
         self._eagle_prop_sum += sum(draft_lengths)
         self._eagle_acc_sum += sum(accepted_per_row)
-
-        # 5. Finalize and publish logs.
-        if log_chunks:
-            logger.info("EAGLE acceptance step: %s", " | ".join(log_chunks))
 
     def _init_mrope_positions(self, req_state: CachedRequestState):
         model = self.get_model()
