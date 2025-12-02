@@ -3577,17 +3577,6 @@ class GPUModelRunner(
                 mm_embed_inputs=mm_embed_inputs,
             )
 
-            true_lengths = None
-            if isinstance(self.drafter, DynamicProposer):
-                true_lengths = getattr(self, "_true_draft_lengths", None)
-
-            if true_lengths and isinstance(draft_token_ids, torch.Tensor):
-                draft_lists = draft_token_ids.tolist()
-                trimmed_lists = [
-                    draft_lists[i][: true_lengths[i]] for i in range(len(true_lengths))
-                ]
-                return trimmed_lists
-
         return draft_token_ids
 
     def update_config(self, overrides: dict[str, Any]) -> None:

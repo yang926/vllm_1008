@@ -90,8 +90,7 @@ class DynamicProposer(EagleProposer):
         self,
         req_ids_in_batch: Sequence[str | None],
     ) -> None:
-        """Cleans up the state for sequences that are actually finished.
-        """
+        """Cleans up the state for sequences that are actually finished."""
         if self.runner is None:
             return
         
@@ -167,7 +166,7 @@ class DynamicProposer(EagleProposer):
         common_attn_metadata: CommonAttentionMetadata,
         sampling_metadata: SamplingMetadata,
         mm_embed_inputs: tuple[list[torch.Tensor], torch.Tensor] | None = None,
-    ) -> torch.Tensor:
+    ) -> list[list[int]]:
         if self.runner is None:
             raise RuntimeError("DynamicProposer requires GPUModelRunner")
 
@@ -189,8 +188,6 @@ class DynamicProposer(EagleProposer):
             if req_id is not None
         }
 
-        self.runner._true_draft_lengths = per_sequence_k
-
         # Safeguard against potential length mismatch, though unlikely.
         if len(per_sequence_k) != batch_size:
             fixed_k = [0] * batch_size
@@ -200,8 +197,8 @@ class DynamicProposer(EagleProposer):
 
         max_k_in_batch = max(per_sequence_k) if per_sequence_k else 0
         if max_k_in_batch == 0:
-            # If no drafts are proposed in this step, return an empty tensor.
-            return torch.empty((batch_size, 0), dtype=torch.long, device=self.device)
+            # If no drafts are proposed in this step, return empty lists.
+            return [[] for _ in range(batch_size)]
 
         # 3. Get draft tokens from the parent (EagleProposer), requesting up to max_k.
         original_num_tokens = self.num_speculative_tokens
@@ -221,42 +218,14 @@ class DynamicProposer(EagleProposer):
             self.num_speculative_tokens = original_num_tokens
 
         if full_draft_token_ids.numel() == 0:
-            return full_draft_token_ids
+            return [[] for _ in range(batch_size)]
 
-        # 4. Pad the draft tensor to be rectangular using valid token IDs.
-        #    This ensures that all tokens have valid embeddings.
-        B, K = full_draft_token_ids.shape
-        if max_k_in_batch != K:
-            raise RuntimeError(f"Unexpected draft shape: {full_draft_token_ids.shape}")
+        # 4. Convert to ragged list directly (no rectangular padding needed).
+        #    This aligns with the n-gram proposer pattern where each sequence
+        #    can have a different number of draft tokens.
+        draft_lists = full_draft_token_ids.tolist()
+        ragged_drafts = [
+            draft_lists[i][: per_sequence_k[i]] for i in range(batch_size)
+        ]
 
-        device = full_draft_token_ids.device
-        dtype = full_draft_token_ids.dtype
-
-        k_vec = torch.tensor(per_sequence_k, device=device, dtype=torch.long)
-        col_indices = torch.arange(K, device=device).unsqueeze(0)
-        padding_mask = col_indices >= k_vec.unsqueeze(1)
-
-        # For rows with k > 0, pad with the last valid draft token.
-        last_valid_indices = torch.clamp(k_vec - 1, min=0).view(-1, 1).expand(-1, K)
-        last_valid_tokens = full_draft_token_ids.gather(1, last_valid_indices)
-
-        # For rows with k = 0, pad with the next_token_id to ensure validity.
-        next_token_padding = (
-            next_token_ids.to(device=device, dtype=dtype).view(-1, 1).expand(-1, K)
-        )
-
-        # Select padding values based on whether k is positive.
-        padding_values = torch.where(
-            k_vec.view(-1, 1) > 0, last_valid_tokens, next_token_padding
-        )
-
-        safe_drafts = full_draft_token_ids.clone()
-        safe_drafts[padding_mask] = padding_values[padding_mask]
-
-        # NOTE:
-        # - `safe_drafts` contains no invalid token IDs, preventing embedding
-        #   out-of-bounds errors.
-        # - The scheduler is aware of the true `k` for each row via separate
-        #   metadata (`num_draft_tokens`), so the padded values are ignored
-        #   during verification, preventing indexing errors.
-        return safe_drafts
+        return ragged_drafts
