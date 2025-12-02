@@ -1106,6 +1106,16 @@ class GPUModelRunner(
         # This loop extracts data, calculates acceptance, and prepares log
         # messages all in one pass to avoid redundant logic.
         
+        # DEBUG: Print batch structure to understand the mapping
+        logger.info(
+            f"[DEBUG] _record_eagle_acceptance called: "
+            f"batch_size={batch_size}, num_sampler_rows={num_sampler_rows}, "
+            f"num_rows_to_process={num_rows_to_process}, "
+            f"input_batch.num_reqs={self.input_batch.num_reqs}, "
+            f"len(req_ids)={len(self.input_batch.req_ids)}, "
+            f"req_ids={self.input_batch.req_ids[:self.input_batch.num_reqs]}"
+        )
+        
         # Get the actual batch size to determine how many req_ids we have
         actual_batch_size = self.input_batch.num_reqs
         
