@@ -1105,6 +1105,10 @@ class GPUModelRunner(
         # 2. Main loop: Calculate acceptance for each request.
         # This loop extracts data, calculates acceptance, and prepares log
         # messages all in one pass to avoid redundant logic.
+        
+        # Get the actual batch size to determine how many req_ids we have
+        actual_batch_size = self.input_batch.num_reqs
+        
         for i in range(num_rows_to_process):
             # Extract the draft tokens for the current request.
             start = cu_num_draft_tokens[i - 1] if i > 0 else 0
@@ -1124,26 +1128,30 @@ class GPUModelRunner(
 
             # FOR DEBUG==================================
             if logger.isEnabledFor(logging.INFO):
-                # Safely check if we have req_id for this index
-                if i < len(self.input_batch.req_ids):
+                # Safely access req_id - we process spec decode requests sequentially
+                # from the start of the batch
+                if i < actual_batch_size and i < len(self.input_batch.req_ids):
                     req_id = self.input_batch.req_ids[i]
-                    if req_id is not None:
-                        # Extract bonus token (last emitted token if exists)
-                        bonus_token = emitted_tokens[-1] if emitted_tokens else None
-                        
-                        # Build detailed log message
-                        log_parts = [
-                            f"req={req_id}",
-                            f"accepted={num_accepted}/{len(draft_tokens)}",
-                            f"draft={draft_tokens}",
-                            f"emitted={emitted_tokens}",
-                        ]
-                        if bonus_token is not None:
-                            log_parts.append(f"bonus={bonus_token}")
-                        
-                        log_chunks.append(" ".join(log_parts))
                 else:
-                    # No req_id available for this index, log with index only
+                    req_id = None
+                    
+                if req_id is not None:
+                    # Extract bonus token (last emitted token if exists)
+                    bonus_token = emitted_tokens[-1] if emitted_tokens else None
+                    
+                    # Build detailed log message
+                    log_parts = [
+                        f"req={req_id}",
+                        f"accepted={num_accepted}/{len(draft_tokens)}",
+                        f"draft={draft_tokens}",
+                        f"emitted={emitted_tokens}",
+                    ]
+                    if bonus_token is not None:
+                        log_parts.append(f"bonus={bonus_token}")
+                    
+                    log_chunks.append(" ".join(log_parts))
+                else:
+                    # No req_id available, log with index
                     log_chunks.append(
                         f"idx={i} accepted={num_accepted}/{len(draft_tokens)} "
                         f"draft={draft_tokens} emitted={emitted_tokens}"
