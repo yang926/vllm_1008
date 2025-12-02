@@ -1100,7 +1100,6 @@ class GPUModelRunner(
 
         accepted_per_row = [0] * num_rows_to_process
         draft_lengths = [0] * num_rows_to_process
-        log_chunks = []
 
         # 2. Main loop: Calculate acceptance for each request.
         for i in range(num_rows_to_process):
@@ -1122,8 +1121,12 @@ class GPUModelRunner(
 
             # Collect debug information
             if logger.isEnabledFor(logging.INFO):
-                req_id = self.input_batch.req_ids[i] if i < len(self.input_batch.req_ids) else None
-                
+                req_id = (
+                    self.input_batch.req_ids[i]
+                    if i < len(self.input_batch.req_ids)
+                    else None
+                )
+
                 if req_id is not None:
                     bonus_token = emitted_tokens[-1] if emitted_tokens else None
                     log_parts = [

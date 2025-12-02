@@ -93,10 +93,10 @@ class DynamicProposer(EagleProposer):
         """Cleans up the state for sequences that are actually finished."""
         if self.runner is None:
             return
-        
+
         # Get all requests still considered active by the engine/scheduler
         active_req_ids = set(self.runner.requests.keys())
-        
+
         # Only delete state for requests that are truly finished
         finished_req_ids = set(self.seq_states.keys()) - active_req_ids
         for req_id in finished_req_ids:
@@ -224,8 +224,6 @@ class DynamicProposer(EagleProposer):
         #    This aligns with the n-gram proposer pattern where each sequence
         #    can have a different number of draft tokens.
         draft_lists = full_draft_token_ids.tolist()
-        ragged_drafts = [
-            draft_lists[i][: per_sequence_k[i]] for i in range(batch_size)
-        ]
+        ragged_drafts = [draft_lists[i][: per_sequence_k[i]] for i in range(batch_size)]
 
         return ragged_drafts
