@@ -342,15 +342,17 @@ class SpeculativeConfig:
 
                 # Automatically detect the method
                 if self.method in ("eagle", "eagle3", "eagle_dynamic"):
+                    # User explicitly specified method, don't override
                     pass
                 # examples:
                 # yuhuili/EAGLE-LLaMA3-Instruct-8B
                 # yuhuili/EAGLE3-LLaMA3.1-Instruct-8B
                 # AngelSlim/Qwen3-8B_eagle3
+                elif "eagle3" in self.draft_model_config.model.lower():
+                    # Prefer eagle3 detection first since it's more specific
+                    self.method = "eagle3"
                 elif "eagle-" in self.draft_model_config.model.lower():
                     self.method = "eagle"
-                elif "eagle3" in self.draft_model_config.model.lower():
-                    self.method = "eagle3"
                 elif self.draft_model_config.hf_config.model_type == "medusa":
                     self.method = "medusa"
                 elif self.draft_model_config.hf_config.model_type == "mlp_speculator":
@@ -395,7 +397,15 @@ class SpeculativeConfig:
                     ):
                         pass
                     else:
-                        eagle_method = "eagle3" if self.method == "eagle3" else "eagle"
+                        # For eagle_dynamic, detect which EAGLE version from draft model name
+                        if self.method == "eagle_dynamic":
+                            eagle_method = (
+                                "eagle3"
+                                if "eagle3" in self.draft_model_config.model.lower()
+                                else "eagle"
+                            )
+                        else:
+                            eagle_method = "eagle3" if self.method == "eagle3" else "eagle"
                         eagle_config = EAGLEConfig(
                             self.draft_model_config.hf_config,
                             method=eagle_method,
