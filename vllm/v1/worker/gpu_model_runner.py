@@ -3,6 +3,7 @@
 
 import gc
 import itertools
+import logging
 import time
 from collections import defaultdict
 from collections.abc import Iterator, Sequence
@@ -1099,6 +1100,7 @@ class GPUModelRunner(
 
         accepted_per_row = [0] * num_rows_to_process
         draft_lengths = [0] * num_rows_to_process
+        log_chunks = []
 
         # 2. Main loop: Calculate acceptance for each request.
         # This loop extracts data, calculates acceptance, and prepares log
@@ -1120,6 +1122,16 @@ class GPUModelRunner(
             num_accepted = self._calculate_prefix_match(emitted_tokens, draft_tokens)
             accepted_per_row[i] = num_accepted
 
+            # FOR DEBUG==================================
+            if logger.isEnabledFor(logging.INFO):
+                req_id = self.input_batch.req_ids[i]
+                if req_id is not None:
+                    log_chunks.append(
+                        f"req={req_id} accepted={num_accepted}/"
+                        f"{len(draft_tokens)} emitted={emitted_tokens}"
+                    )
+            # ===========================================
+
         # 3. Update batch state with the acceptance results.
         # This buffer is used by dynamic proposers to adjust k.
         self.input_batch.num_accepted_tokens_cpu[:batch_size].fill(0)
@@ -1133,6 +1145,10 @@ class GPUModelRunner(
             self._eagle_acc_sum = 0
         self._eagle_prop_sum += sum(draft_lengths)
         self._eagle_acc_sum += sum(accepted_per_row)
+
+        # 5. Finalize and publish logs.
+        if log_chunks:
+            logger.info("EAGLE acceptance step: %s", " | ".join(log_chunks))
 
     def _init_mrope_positions(self, req_state: CachedRequestState):
         model = self.get_model()
