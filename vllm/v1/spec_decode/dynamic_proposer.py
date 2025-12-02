@@ -90,8 +90,15 @@ class DynamicProposer(EagleProposer):
         self,
         req_ids_in_batch: Sequence[str | None],
     ) -> None:
-        """Cleans up the state for sequences that are no longer in the batch."""
-        active_req_ids = {req_id for req_id in req_ids_in_batch if req_id}
+        """Cleans up the state for sequences that are actually finished.
+        """
+        if self.runner is None:
+            return
+        
+        # Get all requests still considered active by the engine/scheduler
+        active_req_ids = set(self.runner.requests.keys())
+        
+        # Only delete state for requests that are truly finished
         finished_req_ids = set(self.seq_states.keys()) - active_req_ids
         for req_id in finished_req_ids:
             del self.seq_states[req_id]
