@@ -3,7 +3,6 @@
 
 import gc
 import itertools
-import logging
 import time
 from collections import defaultdict
 from collections.abc import Iterator, Sequence
