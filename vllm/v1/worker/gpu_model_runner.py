@@ -3,8 +3,8 @@
 
 import gc
 import itertools
-import time
 import logging
+import time
 from collections import defaultdict
 from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
@@ -1119,6 +1119,15 @@ class GPUModelRunner(
             # Calculate the number of accepted tokens via prefix matching.
             num_accepted = self._calculate_prefix_match(emitted_tokens, draft_tokens)
             accepted_per_row[i] = num_accepted
+
+            # Collect debug information
+            if logger.isEnabledFor(logging.INFO):
+                req_id = (
+                    self.input_batch.req_ids[i]
+                    if i < len(self.input_batch.req_ids)
+                    else None
+                )
+
                 if req_id is not None:
                     bonus_token = emitted_tokens[-1] if emitted_tokens else None
                     log_parts = [
