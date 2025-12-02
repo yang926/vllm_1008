@@ -2690,7 +2690,8 @@ class GPUModelRunner(
             and self.speculative_config.method == "eagle_dynamic"
         ):
             self._record_eagle_acceptance(output_token_ids, spec_decode_metadata)
-        self._update_states_after_model_execute(output_token_ids)
+        else:
+            self._update_states_after_model_execute(output_token_ids)
         return sampler_output
 
     def _bookkeeping_sync(
