@@ -397,7 +397,8 @@ class SpeculativeConfig:
                     ):
                         pass
                     else:
-                        # For eagle_dynamic, detect which EAGLE version from draft model name
+                        # For eagle_dynamic, detect which EAGLE version from draft
+                        # model name
                         if self.method == "eagle_dynamic":
                             eagle_method = (
                                 "eagle3"
@@ -405,7 +406,9 @@ class SpeculativeConfig:
                                 else "eagle"
                             )
                         else:
-                            eagle_method = "eagle3" if self.method == "eagle3" else "eagle"
+                            eagle_method = (
+                                "eagle3" if self.method == "eagle3" else "eagle"
+                            )
                         eagle_config = EAGLEConfig(
                             self.draft_model_config.hf_config,
                             method=eagle_method,
