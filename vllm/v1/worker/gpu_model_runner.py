@@ -1126,10 +1126,20 @@ class GPUModelRunner(
             if logger.isEnabledFor(logging.INFO):
                 req_id = self.input_batch.req_ids[i]
                 if req_id is not None:
-                    log_chunks.append(
-                        f"req={req_id} accepted={num_accepted}/"
-                        f"{len(draft_tokens)} emitted={emitted_tokens}"
-                    )
+                    # Extract bonus token (last emitted token if exists)
+                    bonus_token = emitted_tokens[-1] if emitted_tokens else None
+                    
+                    # Build detailed log message
+                    log_parts = [
+                        f"req={req_id}",
+                        f"accepted={num_accepted}/{len(draft_tokens)}",
+                        f"draft={draft_tokens}",
+                        f"emitted={emitted_tokens}",
+                    ]
+                    if bonus_token is not None:
+                        log_parts.append(f"bonus={bonus_token}")
+                    
+                    log_chunks.append(" ".join(log_parts))
             # ===========================================
 
         # 3. Update batch state with the acceptance results.
