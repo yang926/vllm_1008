@@ -62,7 +62,8 @@ class DynamicProposer(EagleProposer):
         logger.info("DynamicProposer initialized for adaptive k.")
 
         # If the method is eagle_dynamic and the draft model is eagle3,
-        # we treat it as eagle3 to enable eagle3-specific logic (e.g. hidden state combination).
+        # we treat it as eagle3 to enable eagle3-specific logic
+        # (e.g. hidden state combination).
         if (
             self.method == "eagle_dynamic"
             and "eagle3" in self.draft_model_config.model.lower()
